@@ -464,9 +464,47 @@
         </Frames>
       </Frame>
 
-      <Button name="Auctionator1Button" inherits="UIPanelButtonTemplate" text="Auctionator">
+      <EditBox name="AuctionatorScanName" autoFocus="false" inherits="InputBoxTemplate">
+          <Size>
+              <AbsDimension x="140" y="16"/>
+          </Size>
+          <Anchors>
+          <Anchor point="RIGHT">
+            <Offset>
+              <AbsDimension x="-182" y="-163"/>
+            </Offset>
+          </Anchor>
+          </Anchors>
+          <Scripts>
+              <OnEnterPressed>
+                  Auctionator_ScanByName();
+                  this:ClearFocus();
+              </OnEnterPressed>
+          </Scripts>
+          <FontString inherits="ChatFontNormal" bytes="64"/>
+      </EditBox>
+
+      <Button name="AuctionatorScanButton" inherits="UIPanelButtonTemplate" text="Scan">
         <Size>
-          <AbsDimension x="126" y="22"/>
+          <AbsDimension x="80" y="22"/>
+        </Size>
+        <Anchors>
+          <Anchor point="RIGHT">
+            <Offset>
+              <AbsDimension x="-98" y="-163"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnClick>
+            Auctionator_ScanByName();
+          </OnClick>
+        </Scripts>
+      </Button>
+
+      <Button name="AuctionatorOptionsButton" inherits="UIPanelButtonTemplate" text="Options">
+        <Size>
+          <AbsDimension x="80" y="22"/>
         </Size>
         <Anchors>
           <Anchor point="RIGHT">
