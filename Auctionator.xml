@@ -2,9 +2,6 @@
 
   <Script file="Auctionator.lua"/>
 
-
-
-
   <!-- Frame to handle all core events -->
   <Frame name="Auctionator_core">
     <Scripts>
@@ -19,7 +16,6 @@
       
         self = {};
         self.TimeSinceLastUpdate = 0;
-        self.NumIdles = 0;
       </OnLoad>
       <OnUpdate>
         Auctionator_OnUpdate(self, elapsed);
@@ -29,8 +25,6 @@
       </OnEvent>
     </Scripts>
   </Frame>
-
-
 
   <Button name="AuctionatorEntryTemplate" virtual="true" hidden="true">
     <Size>
@@ -207,8 +201,6 @@
           </Anchors>
         </FontString>
 
-
-
         <FontString name="Auctionator_Recommend_Text" inherits="GameFontNormal" text="Recommended buyout price">
           <Anchors>
             <Anchor point="TOPLEFT">
@@ -248,13 +240,9 @@
             </Anchor>
           </Anchors>
         </FontString>
-
-
       </Layer>
 
-
       <Layer level="ARTWORK">
-
         <Texture name="$parentMiddle" file="Interface\Glues\CharacterCreate\CharacterCreate-LabelFrame">
           <Size>
             <AbsDimension x="605" y="64"/>
@@ -309,18 +297,10 @@
             </Anchor>
           </Anchors>
         </FontString>
-
-
-
       </Layer>
-
     </Layers>
 
-
-
     <Frames>
-
-
       <Button>
         <Size>
           <AbsDimension y="180" />
@@ -342,7 +322,6 @@
 
           </Layer>
         </Layers>
-
 
         <Scripts>
           <OnLoad>
@@ -425,7 +404,6 @@
         </Layers>
       </Button>
 
-
       <Frame>
         <Size>
           <AbsDimension x="120" y="20" />
@@ -486,7 +464,6 @@
         </Frames>
       </Frame>
 
-
       <Button name="Auctionator1Button" inherits="UIPanelButtonTemplate" text="Auctionator">
         <Size>
           <AbsDimension x="126" y="22"/>
@@ -504,7 +481,6 @@
           </OnClick>
         </Scripts>
       </Button>
-
 
       <ScrollFrame name="AuctionatorScrollFrame" inherits="FauxScrollFrameTemplate">
         <Size>
@@ -527,8 +503,6 @@
           </OnShow>
         </Scripts>
       </ScrollFrame>
-
-
 
       <Button name="AuctionatorEntry1" inherits="AuctionatorEntryTemplate">
         <Anchors>

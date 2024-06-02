@@ -28,7 +28,7 @@ local KM_ANALYZING	= 4;
 
 local processing_state	= KM_NULL_STATE;
 local current_page;
-local forceMsgAreaUpdate = false;
+local forceMsgAreaUpdate = true;
 
 local scandata;
 local sorteddata = {};
@@ -38,12 +38,11 @@ local currentAuctionItemName = "";
 local currentAuctionStackSize = 1;
 local currentAuctionTexture = nil;
 
-local currentAuctionClass;
-local currentAuctionSubclass;
-
 local auctionator_last_buyoutprice = 1;
 local auctionator_last_item_posted = nil;
 local auctionator_pending_message = nil;
+
+local bestPriceOurStackSize;
 
 -----------------------------------------
 
@@ -84,7 +83,6 @@ function Auctionator_OnAddonLoaded()
 
     if (string.lower (arg1) == "blizzard_auctionui") then			
         Auctionator_AddSellTab ();
-        Auctionator_AddSellPanel ();
         
         Auctionator_SetupHookFunctions ();
         
@@ -103,8 +101,6 @@ function Auctionator_OnAddonLoaded()
         auctionsTabElements[13] = AuctionsHighBidderSort;
         auctionsTabElements[14] = AuctionsBidSort;
         auctionsTabElements[15] = AuctionsCancelAuctionButton;
-        --auctionsTabElements[16] = AuctionFrameAuctions;
-        --auctionsTabElements[16] = AuctionFrame;
 
         recommendElements[1] = getglobal ("Auctionator_Recommend_Text");
         recommendElements[2] = getglobal ("Auctionator_RecommendPerItem_Text");
@@ -113,6 +109,8 @@ function Auctionator_OnAddonLoaded()
         recommendElements[5] = getglobal ("Auctionator_RecommendPerStack_Price");
         recommendElements[6] = getglobal ("Auctionator_Recommend_Basis_Text");
         recommendElements[7] = getglobal ("Auctionator_RecommendItem_Tex");
+
+        Auctionator_HideElems(recommendElements);
     end
 end
 
@@ -120,7 +118,7 @@ end
 -----------------------------------------
 
 
-function Auctionator_AuctionFrameTab_OnClick (index)
+function Auctionator_AuctionFrameTab_OnClick(index)
 
     if ( not index ) then
         index = this:GetID();
@@ -128,24 +126,19 @@ function Auctionator_AuctionFrameTab_OnClick (index)
 
     getglobal("Auctionator_Sell_Template"):Hide();
     
-        if (index == 3) then		
-        Auctionator_ShowElems (auctionsTabElements);
+    if (index == 3) then		
+        Auctionator_ShowElems(auctionsTabElements);
     end
     
     if (index ~= AUCTIONATOR_TAB_INDEX) then
-        auctionator_orig_AuctionFrameTab_OnClick (index);
+        auctionator_orig_AuctionFrameTab_OnClick(index);
         auctionator_last_item_posted = nil;
-        forceMsgAreaUpdate = true;
-        
-    elseif (index == AUCTIONATOR_TAB_INDEX) then
+    else
         AuctionFrameTab_OnClick(3);
-        
-        
+
         PanelTemplates_SetTab(AuctionFrame, AUCTIONATOR_TAB_INDEX);
         
-        Auctionator_HideElems (auctionsTabElements);
-        
-        Auctionator_HideElems (recommendElements);
+        Auctionator_HideElems(auctionsTabElements);
         
         getglobal("Auctionator_Sell_Template"):Show();
         AuctionFrame:EnableMouse(false);
@@ -155,7 +148,6 @@ function Auctionator_AuctionFrameTab_OnClick (index)
         if (currentAuctionItemName ~= "") then
             Auctionator_CalcBaseData();
         end
-    
     end
 
 end
@@ -267,21 +259,9 @@ end
 
 -----------------------------------------
 
-function Auctionator_AddSellPanel ()
-    
---	local frame = CreateFrame("Frame", "Auctionator_Sell_Panel", AuctionFrame, "Auctionator_Sell_Template");
-    --frame:SetParent("AuctionFrame");
-    --frame:SetPoint("TOPLEFT", "AuctionFrame", "TOPLEFT", 0, 0);
-    --relevel(frame);
---	frame:Hide();
-    
-end
-
------------------------------------------
-
 function Auctionator_AddSellTab ()
         
-    local n = AuctionFrame.numTabs+1;
+    local n = AuctionFrame.numTabs + 1;
     
     AUCTIONATOR_TAB_INDEX = n;
 
@@ -291,19 +271,10 @@ function Auctionator_AddSellTab ()
 
     setglobal("AuctionFrameTab4", frame);
     frame:SetID(n);
-    --frame:SetParent("FriendsFrameTabTemplate");
     frame:SetText("Auctionator");
     frame:SetPoint("LEFT", getglobal("AuctionFrameTab"..n-1), "RIGHT", -8, 0);
     frame:Show();
 
-    --Attempting to index local 'frame' now
-    
-    -- Configure the tab button.
-    --setglobal(AuctionFrameTab4, AuctionFrameTab4);
-    
-    --tabButton:SetPoint("TOPLEFT", getglobal("AuctionFrameTab"..(tabIndex - 1)):GetName(), "TOPRIGHT", -8, 0);
-    --tabButton:SetID(tabIndex);
-    
     PanelTemplates_SetNumTabs (AuctionFrame, n);
     PanelTemplates_EnableTab  (AuctionFrame, n);
 end
@@ -328,6 +299,34 @@ function Auctionator_ShowElems (tt)
     for i,x in ipairs(tt) do
         x:Show();
     end
+end
+
+-----------------------------------------
+
+function Auctionator_StartScan(auctionItemName, auctionCount, auctionTexture)
+
+    currentAuctionItemName  = auctionItemName;
+    currentAuctionStackSize = auctionCount;
+    currentAuctionTexture   = auctionTexture;
+
+    Auctionator_RecommendPerItem_Price:Hide();
+    Auctionator_RecommendPerStack_Price:Hide();
+
+    processing_state = KM_NULL_STATE;
+
+    basedata = nil;
+
+    SortAuctionItems("list", "buyout");
+
+    if (IsAuctionSortReversed("list", "buyout")) then
+        SortAuctionItems("list", "buyout");
+    end
+
+    current_page = 0;
+    processing_state = KM_PREQUERY;
+
+    scandata = {};
+
 end
 
 -----------------------------------------
@@ -446,9 +445,7 @@ function Auctionator_Process_Scandata ()
     
     end
 
-
     ----- create a table of these entries sorted by itemPrice
-
 
     local n = 1;
     for i,v in pairs (conddata) do
@@ -463,38 +460,21 @@ end
 
 -----------------------------------------
 
-local bestPriceOurStackSize;
-
------------------------------------------
-
 function Auctionator_CalcBaseData ()
 
-    local bestPrice		= {};		-- a table with one entry per stacksize that is the cheapest auction for that particular stacksize
-    local absoluteBest;				-- the overall cheapest auction
+    local absoluteBest;
     
     local j, sd;
 
     ----- find the best price per stacksize and overall -----
     
     for j,sd in ipairs(sorteddata) do
-    
-        if (bestPrice[sd.stackSize] == nil or bestPrice[sd.stackSize].itemPrice >= sd.itemPrice) then
-            bestPrice[sd.stackSize] = sd;
-        end
-    
-        if (absoluteBest == nil or absoluteBest.itemPrice > sd.itemPrice) then
+        if ((absoluteBest == nil) or (absoluteBest.itemPrice > sd.itemPrice)) then
             absoluteBest = sd;
         end
-    
     end
     
     basedata = absoluteBest;
-
-    if (bestPrice[currentAuctionStackSize]) then
-        basedata				= bestPrice[currentAuctionStackSize];
-        bestPriceOurStackSize	= bestPrice[currentAuctionStackSize];
-    end
-
     
     Auctionator_UpdateRecommendation();
 end
@@ -557,7 +537,7 @@ end
 function Auctionator_OnAuctionHouseShow()
 
     if (AUCTIONATOR_OPEN_FIRST ~= 0) then
-        AuctionFrameTab_OnClick (AUCTIONATOR_TAB_INDEX);
+        AuctionFrameTab_OnClick(AUCTIONATOR_TAB_INDEX);
     end
 
 end
@@ -596,11 +576,6 @@ function Auctionator_Idle(self, elapsed)
         return; 
     end; 
      
-    if (self.NumIdles == nil) then 
-        self.NumIdles = 0; 
-    end; 
-    self.NumIdles = self.NumIdles + 1;
-    
     if (self.TimeSinceLastUpdate > 0.25) then
     
         self.TimeSinceLastUpdate = 0;
@@ -610,7 +585,7 @@ function Auctionator_Idle(self, elapsed)
         if (processing_state == KM_PREQUERY) then
             if (CanSendAuctionQuery()) then
                 processing_state = KM_IN_QUERY;
-                QueryAuctionItems (currentAuctionItemName, "", "", nil, currentAuctionClass, currentAuctionSubclass, current_page, nil, nil);
+                QueryAuctionItems (currentAuctionItemName, "", "", nil, nil, nil, current_page, nil, nil);
                 processing_state = KM_POSTQUERY;
                 current_page = current_page + 1;
             end
@@ -626,50 +601,23 @@ function Auctionator_Idle(self, elapsed)
         auctionCount	= 0;
     end
 
-    if (currentAuctionItemName ~= auctionItemName or currentAuctionStackSize ~= auctionCount or self.NumIdles == 1 or forceMsgAreaUpdate) then
-    
+    if (forceMsgAreaUpdate or (currentAuctionItemName ~= auctionItemName)) then
         forceMsgAreaUpdate = false;
         
         sorteddata = {};
         Auctionator_ScrollbarUpdate();
 
-        currentAuctionItemName  = auctionItemName;
-        currentAuctionStackSize = auctionCount;
-        currentAuctionTexture	= auctionTexture;
-        
-        Auctionator_RecommendPerItem_Price:Hide();
-        Auctionator_RecommendPerStack_Price:Hide();
-
-        processing_state = KM_NULL_STATE;
-        
-        basedata = nil;
-        
-        if (currentAuctionItemName == "") then
-            
+        if (auctionItemName ~= "") then
+            Auctionator_StartScan(auctionItemName, auctionCount, auctionTexture);
+        else
+            currentAuctionItemName = "";
             if (auctionator_pending_message) then
                 Auctionator_SetMessage (auctionator_pending_message);
                 auctionator_pending_message = nil;
             elseif (auctionator_last_item_posted == nil) then
                 Auctionator_SetMessage ("Drag an item to the Auction Item area\n\nto see recommended pricing information");
             end
-        else
-            local sName, sLink, iRarity, iLevel, iMinLevel, sType, sSubType, iStackCount = GetItemInfo(currentAuctionItemName);
-        
-            currentAuctionClass		= ItemType2AuctionClass (sType);
-            currentAuctionSubclass	= "Guns"--Oh, no one's looking! SubType2AuctionSubclass (currentAuctionClass, sSubType);
-
-            SortAuctionItems("list", "buyout");
-
-            if (IsAuctionSortReversed("list", "buyout")) then
-                SortAuctionItems("list", "buyout");
-            end
-         
-            current_page = 0;
-            processing_state = KM_PREQUERY;
-
-            scandata = {};
         end
-
     end
 
 end
@@ -741,8 +689,6 @@ end
 
 function Auctionator_EntryOnClick()
     local entryIndex = this:GetID();
-    
---	chatmsg (entryIndex);
     
     basedata = sorteddata[entryIndex];
 
