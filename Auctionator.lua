@@ -744,9 +744,12 @@ function Auctionator_ScanByName()
         local auctionItemName, auctionTexture, auctionCount = GetAuctionSellItemInfo();
 
         if (nil ~= auctionItemName) then
+            AuctionatorScanName:SetText(auctionItemName);
+            BrowseName:SetText(auctionItemName);
             Auctionator_StartScan(auctionItemName, auctionCount, auctionTexture);
         end
     else
+        BrowseName:SetText(scanName);
         Auctionator_StartScan(scanName, 1, nil);
     end
 
