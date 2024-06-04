@@ -11,7 +11,7 @@ local auctionsTabElements	= {};
 AUCTIONATOR_ENABLE_ALT	= 1;
 AUCTIONATOR_OPEN_FIRST	= 0;
 
-local AUCTIONATOR_TAB_INDEX = 4;
+local scan_sell_tab_index = 4;
 
 -----------------------------------------
 
@@ -85,9 +85,8 @@ end
 function Auctionator_OnAddonLoaded()
 
     if (string.lower (arg1) == "blizzard_auctionui") then
-        Auctionator_AddSellTab ();
-
-        Auctionator_SetupHookFunctions ();
+        Auctionator_AddScanSellTab();
+        Auctionator_SetupHookFunctions();
 
         auctionsTabElements[1]  = AuctionsScrollFrame;
         auctionsTabElements[2]  = AuctionsButton1;
@@ -123,24 +122,13 @@ end
 
 function Auctionator_AuctionFrameTab_OnClick(index)
 
-    if ( not index ) then
+    if (not index) then
         index = this:GetID();
     end
 
-    getglobal("Auctionator_Sell_Template"):Hide();
-
-    if (index == 3) then
-        Auctionator_ShowElems(auctionsTabElements);
-    end
-
-    if (index ~= AUCTIONATOR_TAB_INDEX) then
-        auctionator_orig_AuctionFrameTab_OnClick(index);
-        auctionator_last_item_posted = nil;
-    else
-        AuctionFrameTab_OnClick(3);
-
-        PanelTemplates_SetTab(AuctionFrame, AUCTIONATOR_TAB_INDEX);
-
+    if (index == scan_sell_tab_index) then
+        auctionator_orig_AuctionFrameTab_OnClick(3);
+        PanelTemplates_SetTab(AuctionFrame, scan_sell_tab_index);
         Auctionator_HideElems(auctionsTabElements);
 
         getglobal("Auctionator_Sell_Template"):Show();
@@ -151,6 +139,11 @@ function Auctionator_AuctionFrameTab_OnClick(index)
         if (currentScanItemName ~= "") then
             Auctionator_CalcBaseData();
         end
+    else
+        getglobal("Auctionator_Sell_Template"):Hide();
+        Auctionator_ShowElems(auctionsTabElements);
+        auctionator_orig_AuctionFrameTab_OnClick(index);
+        auctionator_last_item_posted = nil;
     end
 
 end
@@ -167,10 +160,8 @@ function Auctionator_ContainerFrameItemButton_OnModifiedClick (button)
         return auctionator_orig_ContainerFrameItemButton_OnModifiedClick (button);
     end;
 
-    if (PanelTemplates_GetSelectedTab (AuctionFrame) ~= AUCTIONATOR_TAB_INDEX) then
-
-        AuctionFrameTab_OnClick (AUCTIONATOR_TAB_INDEX);
-
+    if (PanelTemplates_GetSelectedTab (AuctionFrame) ~= scan_sell_tab_index) then
+        AuctionFrameTab_OnClick (scan_sell_tab_index);
     end
 
 
@@ -192,7 +183,7 @@ function Auctionator_AuctionFrameAuctions_Update()
 
     auctionator_orig_AuctionFrameAuctions_Update();
 
-    if (PanelTemplates_GetSelectedTab (AuctionFrame) == AUCTIONATOR_TAB_INDEX  and	AuctionFrame:IsShown()) then
+    if (PanelTemplates_GetSelectedTab (AuctionFrame) == scan_sell_tab_index  and	AuctionFrame:IsShown()) then
         Auctionator_HideElems (auctionsTabElements);
     end
 
@@ -206,7 +197,7 @@ end
 
 function Auctionator_AuctionsCreateAuctionButton_OnClick()
 
-    if (PanelTemplates_GetSelectedTab (AuctionFrame) == AUCTIONATOR_TAB_INDEX  and AuctionFrame:IsShown()) then
+    if (PanelTemplates_GetSelectedTab (AuctionFrame) == scan_sell_tab_index  and AuctionFrame:IsShown()) then
 
         auctionator_last_buyoutprice = MoneyInputFrame_GetCopper(BuyoutPrice);
         auctionator_last_item_posted = currentSellItemName;
@@ -262,11 +253,11 @@ end
 
 -----------------------------------------
 
-function Auctionator_AddSellTab ()
+function Auctionator_AddScanSellTab()
 
     local n = AuctionFrame.numTabs + 1;
 
-    AUCTIONATOR_TAB_INDEX = n;
+    scan_sell_tab_index = n;
 
     local framename = "AuctionFrameTab"..n;
 
@@ -274,12 +265,12 @@ function Auctionator_AddSellTab ()
 
     setglobal("AuctionFrameTab4", frame);
     frame:SetID(n);
-    frame:SetText("Auctionator");
+    frame:SetText("Scan/Sell");
     frame:SetPoint("LEFT", getglobal("AuctionFrameTab"..n-1), "RIGHT", -8, 0);
     frame:Show();
 
-    PanelTemplates_SetNumTabs (AuctionFrame, n);
-    PanelTemplates_EnableTab  (AuctionFrame, n);
+    PanelTemplates_SetNumTabs(AuctionFrame, n);
+    PanelTemplates_EnableTab(AuctionFrame, n);
 end
 
 -----------------------------------------
@@ -530,7 +521,7 @@ end
 function Auctionator_OnAuctionHouseShow()
 
     if (AUCTIONATOR_OPEN_FIRST ~= 0) then
-        AuctionFrameTab_OnClick(AUCTIONATOR_TAB_INDEX);
+        AuctionFrameTab_OnClick(scan_sell_tab_index);
     end
 
 end
@@ -595,7 +586,8 @@ function Auctionator_Idle(self, elapsed)
     end
 
     if (currentSellItemName ~= auctionItemName) then
-        if ((processing_state == KM_NULL_STATE) or (currentSellItemName == currentScanItemName)) then
+        if (((processing_state == KM_NULL_STATE) or (currentSellItemName == currentScanItemName)) and
+            (PanelTemplates_GetSelectedTab (AuctionFrame) == scan_sell_tab_index)) then
             if (auctionItemName ~= "") then
                 Auctionator_StartScan(auctionItemName, auctionCount, auctionTexture);
             elseif (currentSellItemName == currentScanItemName) then
@@ -737,8 +729,8 @@ function Auctionator_ShowOptionsFrame()
     AuctionatorVersionText:SetText ("Version: "..AuctionatorVersion);
 
 
-    AuctionatorOption_Enable_Alt:SetChecked (NumToBool(AUCTIONATOR_ENABLE_ALT));
-    AuctionatorOption_Open_First:SetChecked (NumToBool(AUCTIONATOR_OPEN_FIRST));
+    AuctionatorOption_Enable_Alt:SetChecked(NumToBool(AUCTIONATOR_ENABLE_ALT));
+    AuctionatorOption_Open_First:SetChecked(NumToBool(AUCTIONATOR_OPEN_FIRST));
 
 end
 
