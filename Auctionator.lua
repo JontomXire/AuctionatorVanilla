@@ -127,20 +127,19 @@ function Auctionator_AuctionFrameTab_OnClick(index)
     end
 
     if (index == scan_sell_tab_index) then
+        AuctionatorScanSellFrame:Show();
         auctionator_orig_AuctionFrameTab_OnClick(3);
-        PanelTemplates_SetTab(AuctionFrame, scan_sell_tab_index);
         Auctionator_HideElems(auctionsTabElements);
 
-        getglobal("Auctionator_Sell_Template"):Show();
-        AuctionFrame:EnableMouse(false);
+        PanelTemplates_SetTab(AuctionFrame, scan_sell_tab_index);
 
-        OpenAllBags(true);
+        AuctionFrame:EnableMouse(false);
 
         if (currentScanItemName ~= "") then
             Auctionator_CalcBaseData();
         end
     else
-        getglobal("Auctionator_Sell_Template"):Hide();
+        AuctionatorScanSellFrame:Hide();
         Auctionator_ShowElems(auctionsTabElements);
         auctionator_orig_AuctionFrameTab_OnClick(index);
         auctionator_last_item_posted = nil;
@@ -197,11 +196,9 @@ end
 
 function Auctionator_AuctionsCreateAuctionButton_OnClick()
 
-    if (PanelTemplates_GetSelectedTab (AuctionFrame) == scan_sell_tab_index  and AuctionFrame:IsShown()) then
-
+    if (PanelTemplates_GetSelectedTab(AuctionFrame) == scan_sell_tab_index  and AuctionFrame:IsShown()) then
         auctionator_last_buyoutprice = MoneyInputFrame_GetCopper(BuyoutPrice);
         auctionator_last_item_posted = currentSellItemName;
-
     end
 
     auctionator_orig_AuctionsCreateAuctionButton_OnClick();
@@ -263,14 +260,15 @@ function Auctionator_AddScanSellTab()
 
     local frame = CreateFrame("Button", framename, AuctionFrame, "AuctionTabTemplate");
 
-    setglobal("AuctionFrameTab4", frame);
+    setglobal(framename, frame);
     frame:SetID(n);
     frame:SetText("Scan/Sell");
-    frame:SetPoint("LEFT", getglobal("AuctionFrameTab"..n-1), "RIGHT", -8, 0);
+    frame:SetPoint("LEFT", getglobal("AuctionFrameTab"..(n-1)), "RIGHT", -8, 0);
     frame:Show();
 
     PanelTemplates_SetNumTabs(AuctionFrame, n);
     PanelTemplates_EnableTab(AuctionFrame, n);
+
 end
 
 -----------------------------------------
@@ -532,7 +530,7 @@ function Auctionator_OnAuctionHouseClosed()
 
     AuctionatorOptionsFrame:Hide();
     AuctionatorDescriptionFrame:Hide();
-    Auctionator_Sell_Template:Hide();
+    AuctionatorScanSellFrame:Hide();
 
 end
 
