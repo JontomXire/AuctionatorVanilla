@@ -32,6 +32,7 @@ local current_page;
 local scandata;
 local sorteddata = {};
 local basedata;
+local best_bid_price;
 
 local currentSellItemName = "";
 local currentScanItemName = "";
@@ -111,6 +112,8 @@ function Auctionator_OnAddonLoaded()
         recommendElements[5] = getglobal ("Auctionator_RecommendPerStack_Price");
         recommendElements[6] = getglobal ("Auctionator_Recommend_Basis_Text");
         recommendElements[7] = getglobal ("Auctionator_RecommendItem_Tex");
+        recommendElements[8] = getglobal ("Auctionator_BestBidPerItem_Price");
+        recommendElements[9] = getglobal ("Auctionator_BestBid_Text");
 
         Auctionator_HideElems(recommendElements);
     end
@@ -213,7 +216,7 @@ function Auctionator_OnAuctionOwnedUpdate ()
 
         Auctionator_Recommend_Text:SetText ("Auction Created for "..auctionator_last_item_posted);
 
-        MoneyFrame_Update ("Auctionator_RecommendPerStack_Price", auctionator_last_buyoutprice);
+        MoneyFrame_Update("Auctionator_RecommendPerStack_Price", auctionator_last_buyoutprice);
 
         Auctionator_RecommendPerStack_Price:Show();
         Auctionator_RecommendPerItem_Price:Hide();
@@ -306,8 +309,10 @@ function Auctionator_StartScan(auctionItemName, auctionCount, auctionTexture)
 
     Auctionator_RecommendPerItem_Price:Hide();
     Auctionator_RecommendPerStack_Price:Hide();
+    Auctionator_BestBidPerItem_Price:Hide();
 
     basedata = nil;
+    best_bid_price = nil;
 
     SortAuctionItems("list", "buyout");
 
@@ -344,14 +349,24 @@ function Auctionator_OnAuctionUpdate ()
         for x = 1, numBatchAuctions do
             local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner = GetAuctionItemInfo("list", x);
 
-            if (name == currentScanItemName and buyoutPrice > 0) then
-                local sd = {};
+            if (name == currentScanItemName) then
+                if (buyoutPrice > 0) then
+                    local sd = {};
 
-                sd["stackSize"]		= count;
-                sd["buyoutPrice"]	= buyoutPrice;
-                sd["owner"]			= owner;
+                    sd["stackSize"]   = count;
+                    sd["buyoutPrice"] = buyoutPrice;
+                    sd["owner"]       = owner;
 
-                tinsert (scandata, sd);
+                    tinsert (scandata, sd);
+                end
+
+                if (3 > GetAuctionItemTimeLeft("list", x)) then
+                    local bid_price = minBid / count;
+
+                    if ((nil == best_bid_price) or (best_bid_price > bid_price)) then
+                        best_bid_price = bid_price;
+                    end
+                end
 
                 if (nil == currentScanTexture) then
                     currentScanTexture = texture;
@@ -412,11 +427,11 @@ function Auctionator_Process_Scandata ()
         else
             local data = {};
 
-            data.stackSize 		= sd.stackSize;
-            data.buyoutPrice	= sd.buyoutPrice;
-            data.itemPrice		= sd.buyoutPrice / sd.stackSize;
-            data.count			= 1;
-            data.numYours		= 0;
+            data.stackSize   = sd.stackSize;
+            data.buyoutPrice = sd.buyoutPrice;
+            data.itemPrice   = sd.buyoutPrice / sd.stackSize;
+            data.count       = 1;
+            data.numYours    = 0;
 
             conddata[key] = data;
         end
@@ -465,7 +480,6 @@ end
 
 function Auctionator_UpdateRecommendation ()
 
-    --AuctionFrame:setTopLevel (false);
     if (basedata) then
         local newBuyoutPrice = basedata.itemPrice * currentScanStackSize;
 
@@ -493,8 +507,8 @@ function Auctionator_UpdateRecommendation ()
             Auctionator_RecommendItem_Tex:Hide();
         end
 
-        MoneyFrame_Update ("Auctionator_RecommendPerItem_Price",  round(newBuyoutPrice / currentScanStackSize));
-        MoneyFrame_Update ("Auctionator_RecommendPerStack_Price", round(newBuyoutPrice));
+        MoneyFrame_Update("Auctionator_RecommendPerItem_Price",  round(newBuyoutPrice / currentScanStackSize));
+        MoneyFrame_Update("Auctionator_RecommendPerStack_Price", round(newBuyoutPrice));
 
         MoneyInputFrame_SetCopper (BuyoutPrice, newBuyoutPrice);
         MoneyInputFrame_SetCopper (StartPrice,  newStartPrice);
@@ -508,8 +522,17 @@ function Auctionator_UpdateRecommendation ()
         else
             Auctionator_Recommend_Basis_Text:SetText ("(based on auction selected below)");
         end
-
     end
+
+    if (best_bid_price == nil) then
+        Auctionator_BestBid_Text:Hide();
+        Auctionator_BestBidPerItem_Price:Hide();
+    else
+        MoneyFrame_Update("Auctionator_BestBidPerItem_Price", best_bid_price);
+        Auctionator_BestBid_Text:Show();
+        Auctionator_BestBidPerItem_Price:Show();
+    end
+
 end
 
 
@@ -647,9 +670,12 @@ function Auctionator_ScrollbarUpdate()
             end;
 
 
-            if		(data.numYours == 0) then			lineEntry_comm:SetText ("");
-            elseif	(data.numYours == data.count) then	lineEntry_comm:SetText ("yours");
-            else										lineEntry_comm:SetText ("yours: "..data.numYours);
+            if (data.numYours == 0) then
+                lineEntry_comm:SetText("");
+            elseif (data.numYours == data.count) then
+                lineEntry_comm:SetText("yours");
+            else
+                lineEntry_comm:SetText("yours: "..data.numYours);
             end;
 
 

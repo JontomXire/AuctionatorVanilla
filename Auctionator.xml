@@ -209,7 +209,7 @@
           <Anchors>
             <Anchor point="TOPLEFT">
               <Offset>
-                <AbsDimension x="77" y="-38"/>
+                <AbsDimension x="80" y="-40"/>
               </Offset>
             </Anchor>
           </Anchors>
@@ -219,7 +219,7 @@
           <Anchors>
             <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="Auctionator_Recommend_Text">
               <Offset>
-                <AbsDimension x="20" y="-2"/>
+                <AbsDimension x="20" y="1"/>
               </Offset>
             </Anchor>
           </Anchors>
@@ -227,9 +227,9 @@
 
         <FontString name="Auctionator_RecommendPerStack_Text" inherits="GameFontHighlightSmall" text="per stack">
           <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="Auctionator_Recommend_Text">
+            <Anchor point="TOPLEFT" relativePoint="TOPLEFT" relativeTo="Auctionator_Recommend_Basis_Text">
               <Offset>
-                <AbsDimension x="152" y="-28"/>
+                <AbsDimension x="0" y="-29"/>
               </Offset>
             </Anchor>
           </Anchors>
@@ -237,9 +237,9 @@
 
         <FontString name="Auctionator_RecommendPerItem_Text" inherits="GameFontHighlightSmall" text="per item">
           <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="Auctionator_Recommend_Text">
+            <Anchor point="TOPLEFT" relativePoint="TOPLEFT" relativeTo="Auctionator_RecommendPerStack_Text">
               <Offset>
-                <AbsDimension x="152" y="-51"/>
+                <AbsDimension x="0" y="-21"/>
               </Offset>
             </Anchor>
           </Anchors>
@@ -297,6 +297,16 @@
             <Anchor point="LEFT" relativePoint="LEFT" relativeTo="$resultsTitleBar">
               <Offset>
                 <AbsDimension x="500" y="1"/>
+              </Offset>
+            </Anchor>
+          </Anchors>
+        </FontString>
+
+        <FontString name="Auctionator_BestBid_Text" inherits="GameFontNormal" text="Best bid price">
+          <Anchors>
+            <Anchor point="TOP" relativePoint="BOTTOM" relativeTo="Auctionator_Recommend_Text">
+              <Offset>
+                <AbsDimension x="0" y="-80"/>
               </Offset>
             </Anchor>
           </Anchors>
@@ -368,64 +378,52 @@
         </Layers>
       </Button>
 
-      <Frame>
+      <Frame name="Auctionator_RecommendPerStack_Price" inherits="SmallMoneyFrameTemplate">
         <Size>
           <AbsDimension x="120" y="20" />
         </Size>
         <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="Auctionator_Recommend_Text">
+          <Anchor point="TOPRIGHT" relativePoint="BOTTOMRIGHT" relativeTo="Auctionator_Recommend_Text">
             <Offset>
-              <AbsDimension x="32" y="-24"/>
+              <AbsDimension x="10" y="-12"/>
             </Offset>
           </Anchor>
         </Anchors>
-        <Frames>
-          <Frame name="Auctionator_RecommendPerStack_Price" inherits="SmallMoneyFrameTemplate">
-            <Size>
-              <AbsDimension x="120" y="16" />
-            </Size>
-            <Anchors>
-              <Anchor point="RIGHT">
-                <Offset>
-                  <AbsDimension x="0" y="0"/>
-                </Offset>
-              </Anchor>
-            </Anchors>
-            <Scripts>
-              <OnLoad>AuctionatorMoneyFrame_OnLoad();</OnLoad>
-            </Scripts>
-          </Frame>
-        </Frames>
+        <Scripts>
+            <OnLoad>AuctionatorMoneyFrame_OnLoad();</OnLoad>
+        </Scripts>
       </Frame>
 
-      <Frame>
+      <Frame name="Auctionator_RecommendPerItem_Price" inherits="SmallMoneyFrameTemplate">
         <Size>
           <AbsDimension x="120" y="20" />
         </Size>
         <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="Auctionator_Recommend_Text">
+          <Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" relativeTo="Auctionator_RecommendPerStack_Price">
             <Offset>
-              <AbsDimension x="32" y="-46"/>
+              <AbsDimension x="0" y="-22"/>
             </Offset>
           </Anchor>
         </Anchors>
-        <Frames>
-          <Frame name="Auctionator_RecommendPerItem_Price" inherits="SmallMoneyFrameTemplate">
-            <Size>
-              <AbsDimension x="120" y="16" />
-            </Size>
-            <Anchors>
-              <Anchor point="RIGHT">
-                <Offset>
-                  <AbsDimension x="0" y="0"/>
-                </Offset>
-              </Anchor>
-            </Anchors>
-            <Scripts>
-              <OnLoad>AuctionatorMoneyFrame_OnLoad();</OnLoad>
-            </Scripts>
-          </Frame>
-        </Frames>
+        <Scripts>
+            <OnLoad>AuctionatorMoneyFrame_OnLoad();</OnLoad>
+        </Scripts>
+      </Frame>
+
+      <Frame name="Auctionator_BestBidPerItem_Price" inherits="SmallMoneyFrameTemplate">
+        <Size>
+          <AbsDimension x="120" y="20" />
+        </Size>
+        <Anchors>
+          <Anchor point="TOPRIGHT" relativePoint="BOTTOMRIGHT" relativeTo="Auctionator_RecommendPerItem_Price">
+            <Offset>
+              <AbsDimension x="0" y="-40"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+            <OnLoad>AuctionatorMoneyFrame_OnLoad();</OnLoad>
+        </Scripts>
       </Frame>
 
       <EditBox name="AuctionatorScanName" autoFocus="false" inherits="InputBoxTemplate">
