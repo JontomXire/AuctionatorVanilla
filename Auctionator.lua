@@ -361,7 +361,13 @@ function Auctionator_OnAuctionUpdate ()
                 end
 
                 if (3 > GetAuctionItemTimeLeft("list", x)) then
-                    local bid_price = minBid / count;
+                    local bid_price;
+
+                    if ((nil == bidAmount) or (0 == bidAmount)) then
+                        bid_price = round(minBid / count);
+                    else
+                        bid_price = round((bidAmount + minIncrement) / count);
+                    end
 
                     if ((nil == best_bid_price) or (best_bid_price > bid_price)) then
                         best_bid_price = bid_price;
